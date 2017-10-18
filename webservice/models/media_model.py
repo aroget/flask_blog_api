@@ -1,7 +1,6 @@
 from webservice import db
 from sqlalchemy_utils.types.choice import ChoiceType
 
-from webservice.models import user_model
 from webservice.models.base_model import Base
 
 SUPPORTED_EXTENSIONS = ['.jpg', '.jpeg', '.png']
@@ -15,14 +14,14 @@ class Media(Base):
 
     name = db.Column(db.String(120))
     url = db.Column(db.String(200))
+    author_id = db.Column(db.Integer, db.ForeignKey('authors.id'))
     is_active = db.Column(db.Boolean, default=True)
     media_type = db.Column(ChoiceType(MEDIA_TYPES))
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
-    def __init__(self, name, url, media_type, user_id):
+    def __init__(self, name, url, media_type, author_id):
         self.url = url
         self.name = name
-        self.user_id = user_id
+        self.author_id = author_id
         self.media_type = media_type
 
     def __repr__(self):
