@@ -4,8 +4,10 @@ from flask_restful import reqparse, HTTPException
 
 from webservice import app, db
 from webservice.models.author_model import Author, User
+from webservice.decorators.login_required import login_required
 
-class AuthorHanlder(MethodView):
+class AuthorHandler(MethodView):
+    @login_required
     def get(self):
         authors = Author.query.all()
         return jsonify({'response': [author.serialize for author in authors]})
@@ -62,4 +64,4 @@ class AuthorHanlder(MethodView):
             return jsonify('ALL_OK'), 201
 
 
-app.add_url_rule('/authors/', view_func=AuthorHanlder.as_view('authors'))
+app.add_url_rule('/authors/', view_func=AuthorHandler.as_view('authors'))

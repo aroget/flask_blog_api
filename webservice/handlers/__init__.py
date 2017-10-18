@@ -3,4 +3,5 @@ __all__ = [
     "tag_handler",
     "session_handler",
     "author_handler",
+    "media_handler",
 ]
