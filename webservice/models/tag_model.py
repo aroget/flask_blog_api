@@ -23,4 +23,5 @@ class Tag(Base):
             'id': self.id,
             'label': self.label,
             'user_id': self.user_id,
+            'is_active': self.is_active,
         }

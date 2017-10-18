@@ -5,16 +5,12 @@ from flask_restful import reqparse, HTTPException
 
 from webservice import app, db
 from webservice.models.user_model import User
-from webservice.utils.email_utils import send_welcome_email
 from webservice.decorators.login_required import login_required
 
 
 class UserHanlder(MethodView):
     @login_required
     def get(self):
-        to_name = "{} {}".format(g.user.first_name, g.user.last_name)
-
-        send_welcome_email(to_email = g.user.email, to_name = to_name)
         return jsonify({'response': g.user.serialize})
 
 
