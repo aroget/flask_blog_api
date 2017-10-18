@@ -10,11 +10,44 @@ from webservice.decorators.login_required import login_required
 
 class UserHanlder(MethodView):
     @login_required
-    def get(self):
+    def get(self, user_id):
         return jsonify({'response': g.user.serialize})
 
+    @login_required
+    def put(self, user_id):
+        user = User.query.get(g.user.id)
 
-    def post(self):
+        if user is None:
+            return jsonify('NOT_FOUND'), 404
+
+        parser = reqparse.RequestParser()
+        parser.add_argument('first_name', type=str)
+        parser.add_argument('last_name', type=str)
+        parser.add_argument('email', type=str)
+
+        try:
+            args = parser.parse_args()
+        except HTTPException as error:
+            return jsonify({'BAD_REQUEST': error.data.get('message', '')})
+
+        req = request.json
+
+        if req['first_name']:
+            user.first_name = req['first_name']
+
+        if req['last_name']:
+            user.last_name = req['last_name']
+
+        if req['email']:
+            user.email = req['email']
+
+        db.session.add(tag)
+        db.session.commit()
+
+        return jsonify('ALL_OK'), 200
+
+
+    def post(self, user_id):
         parser = reqparse.RequestParser()
         parser.add_argument('first_name', type=str, required=True, help='First name is required')
         parser.add_argument('last_name', type=str, required=True, help='Last name is required')
@@ -41,4 +74,13 @@ class UserHanlder(MethodView):
 
         return jsonify({'ALL_OK': None})
 
-app.add_url_rule('/users/', view_func=UserHanlder.as_view('users'))
+
+user_handler = UserHanlder.as_view('users')
+
+app.add_url_rule('/users/', defaults={'user_id': None},
+                 view_func=user_handler, methods=['GET',])
+
+app.add_url_rule('/users/', view_func=user_handler, methods=['POST',])
+
+app.add_url_rule('/user/<int:user_id>', view_func=user_handler,
+                 methods=['GET', 'PUT', 'DELETE'])
