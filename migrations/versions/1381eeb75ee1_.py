@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: e64947a619ce
-Revises: aea2b0136c97
-Create Date: 2017-10-18 10:47:13.576036
+Revision ID: 1381eeb75ee1
+Revises: 
+Create Date: 2017-10-23 06:35:28.655535
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision = 'e64947a619ce'
-down_revision = 'aea2b0136c97'
+revision = '1381eeb75ee1'
+down_revision = None
 branch_labels = None
 depends_on = None
 
@@ -23,6 +23,8 @@ def upgrade():
     op.create_foreign_key(None, 'media', 'authors', ['author_id'], ['id'])
     op.drop_column('media', 'user_id')
     op.add_column('tags', sa.Column('author_id', sa.Integer(), nullable=True))
+    op.drop_index('label', table_name='tags')
+    op.create_unique_constraint(None, 'tags', ['label', 'author_id'])
     op.drop_constraint('tags_ibfk_1', 'tags', type_='foreignkey')
     op.create_foreign_key(None, 'tags', 'authors', ['author_id'], ['id'])
     op.drop_column('tags', 'user_id')
@@ -34,6 +36,8 @@ def downgrade():
     op.add_column('tags', sa.Column('user_id', mysql.INTEGER(display_width=11), autoincrement=False, nullable=True))
     op.drop_constraint(None, 'tags', type_='foreignkey')
     op.create_foreign_key('tags_ibfk_1', 'tags', 'users', ['user_id'], ['id'])
+    op.drop_constraint(None, 'tags', type_='unique')
+    op.create_index('label', 'tags', ['label'], unique=True)
     op.drop_column('tags', 'author_id')
     op.add_column('media', sa.Column('user_id', mysql.INTEGER(display_width=11), autoincrement=False, nullable=True))
     op.drop_constraint(None, 'media', type_='foreignkey')

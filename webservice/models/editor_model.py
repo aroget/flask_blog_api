@@ -8,6 +8,7 @@ class Editor(Base):
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     user = db.relationship('User', back_populates='editor')
+    is_active = db.Column(db.Boolean, default=True)
 
     def __repr__(self):
         return '<Editor %r>' % self.id

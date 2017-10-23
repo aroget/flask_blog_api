@@ -8,7 +8,7 @@ class Author(Base):
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     user = db.relationship('User', back_populates='author')
-    is_disable = db.Column(db.Boolean, default=False)
+    is_active = db.Column(db.Boolean, default=True)
 
     def __repr__(self):
         return '<Author %r>' % self.id

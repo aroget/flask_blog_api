@@ -37,6 +37,3 @@ def seed_users(max_count=1000):
             continue
 
         print(('{} created').format(user_name))
-
-if __name__ == '__main__':
-    seed_users()
