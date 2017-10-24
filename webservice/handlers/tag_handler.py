@@ -13,9 +13,6 @@ FILTER_TYPE = {
     'inactive': 0
 }
 
-def get_filters():
-    return Tag.user_id==g.user.id + ',' +  Tag.is_active==False
-
 
 class TagHanlder(MethodView):
     @login_required
