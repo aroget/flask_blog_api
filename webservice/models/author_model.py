@@ -12,3 +12,11 @@ class Author(Base):
 
     def __repr__(self):
         return '<Author %r>' % self.id
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'is_active': self.is_active,
+            'user': self.user.serialize
+        }

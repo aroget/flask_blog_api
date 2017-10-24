@@ -6,13 +6,38 @@ from webservice import app, db
 from webservice.models.author_model import Author, User
 from webservice.decorators.login_required import login_required
 
+ACTIVE_TYPE = {
+    '1': 1,
+    '0': 0
+}
+
 class AuthorHandler(MethodView):
     @login_required
-    def get(self):
-        authors = Author.query.all()
+    def get(self, author_id):
+
+        if author_id is not None:
+            author = Author.query.get_or_404(author_id)
+            return jsonify({'response': author.serialize})
+
+        query = Author.query
+        filter_by_arg = request.args.get('filter')
+
+        if filter_by_arg is not None:
+            parser = reqparse.RequestParser()
+            parser.add_argument('filter', choices=('1', '0'), location='args')
+
+            try:
+                args = parser.parse_args()
+            except HTTPException as error:
+                return jsonify({'BAD_REQUEST': error.data.get('message', '')})
+
+            query = query.filter(Author.is_active==ACTIVE_TYPE.get(filter_by_arg))
+
+        authors = query.all()
         return jsonify({'response': [author.serialize for author in authors]})
 
-    def post(self):
+    @login_required
+    def post(self, author_id):
         req = request.json
         user_id = None
 
@@ -64,4 +89,34 @@ class AuthorHandler(MethodView):
             return jsonify('ALL_OK'), 201
 
 
-app.add_url_rule('/authors/', view_func=AuthorHandler.as_view('authors'))
+    @login_required
+    def put(self, author_id):
+        parser = reqparse.RequestParser()
+
+        author = Author.query.get_or_404(author_id)
+
+        parser.add_argument('is_active', type=bool, required=True)
+
+        try:
+            args = parser.parse_args()
+        except HTTPException as error:
+            return jsonify({'BAD_REQUEST': error.data.get('message', '')})
+
+        author.is_active = args.get('is_active')
+
+        db.session.add(author)
+        db.session.commit()
+
+        return jsonify({'response': author.serialize}), 200
+
+
+
+author_handler = AuthorHandler.as_view('authors')
+
+app.add_url_rule('/authors/', defaults={'author_id': None},
+                 view_func=author_handler, methods=['GET',])
+
+app.add_url_rule('/authors/', view_func=author_handler, methods=['POST',])
+
+app.add_url_rule('/authors/<int:author_id>', view_func=author_handler,
+                 methods=['GET', 'PUT', 'DELETE'])

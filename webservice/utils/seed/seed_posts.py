@@ -1,5 +1,5 @@
 import random
-import datetime
+import datetime, time
 from faker import Faker
 
 from webservice import db
@@ -36,17 +36,18 @@ def seed_posts(max_count=500):
                     body = body, feature_image = feature_image)
 
         if is_published:
-            # post.published_date = time.mktime(datetime.datetime.now().timetuple()) * 1000
             post.published_date = datetime.datetime.now()
 
         post.author_id = author_id
         post.tag_id = tag_id
 
-        db.session.add(post)
-        db.session.commit()
+        try:
+            db.session.add(post)
+            db.session.commit()
+        except:
+            db.session.rollback()
+            continue
 
         print('new post!')
 
-
-# from webservice.utils.seed.seed_posts import seed_posts
 

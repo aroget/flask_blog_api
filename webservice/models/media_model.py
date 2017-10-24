@@ -38,5 +38,7 @@ class Media(Base):
             "id": self.id,
             "name": self.name,
             "url": self.url,
+            "is_active": self.is_active,
+            "author_id": self.author_id,
             "media_type": self.media_type.value
         }
