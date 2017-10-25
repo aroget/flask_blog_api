@@ -6,38 +6,42 @@ from sqlalchemy.exc import IntegrityError
 from webservice import app, db
 from webservice.models.tag_model import Tag
 from webservice.decorators.login_required import login_required
+from webservice.utils.handlers.register_handler import register_handler
 
 
-FILTER_TYPE = {
-    'active': 1,
-    'inactive': 0
+ACTIVE_TYPE = {
+    '1': 1,
+    '0': 0
 }
 
-
-class TagHanlder(MethodView):
+class TagHandler(MethodView):
     @login_required
     def get(self, tag_id=None):
         filter_by_arg = request.args.get('filter')
 
         if tag_id is not None:
-            tag = Tag.query.get(tag_id)
+            tag = Tag.query.get_or_404(tag_id)
 
+            not_owner = tag.is_from_author(g.user.author.id)
 
-            if tag is None:
+            if not_owner or tag.is_active is not True:
                 return jsonify('NOT_FOUND'), 404
 
-            not_owner = tag.user_id != g.user.id
-            not_active = tag.is_active == False
-
-            if not_owner or not_active:
-                return jsonify('NOT_FOUND'), 404
+            return jsonify({'response': tag.serialize})
 
         query = Tag.query
-        query.filter(Tag.user_id==g.user.id)
+        query = query.filter(Tag.author_id==g.user.author.id)
 
         if filter_by_arg is not None:
+            parser = reqparse.RequestParser()
+            parser.add_argument('filter', choices=('1', '0'), location='args')
 
-            is_active_filter = FILTER_TYPE.get(filter_by_arg)
+            try:
+                args = parser.parse_args()
+            except HTTPException as error:
+                return jsonify({'BAD_REQUEST': error.data.get('message', '')})
+
+            is_active_filter = ACTIVE_TYPE.get(filter_by_arg)
 
             if is_active_filter is not None:
                 query = query.filter(Tag.is_active==is_active_filter)
@@ -49,12 +53,9 @@ class TagHanlder(MethodView):
 
     @login_required
     def delete(self, tag_id):
-        tag = Tag.query.get(tag_id)
+        tag = Tag.query.get_or_404(tag_id)
 
-        if tag is None:
-            return jsonify('NOT_FOUND'), 404
-
-        if tag.user_id is not g.user.id:
+        if tag.author_id is not g.user.author.id:
             return jsonify('FORBIDDEN'), 403
 
         tag.is_active = False
@@ -66,15 +67,11 @@ class TagHanlder(MethodView):
 
     @login_required
     def put(self, tag_id):
-        tag = Tag.query.get(tag_id)
-
-        if tag is None:
-            return jsonify('NOT_FOUND'), 404
+        tag = Tag.query.get_or_404(tag_id)
 
         parser = reqparse.RequestParser()
         parser.add_argument('label', type=str, required=False)
         parser.add_argument('is_active', type=bool, required=False)
-
 
         try:
             args = parser.parse_args()
@@ -118,13 +115,4 @@ class TagHanlder(MethodView):
 
         return jsonify('ALL_OK'), 201
 
-
-tags_handler = TagHanlder.as_view('tags')
-
-app.add_url_rule('/tags/', defaults={'tag_id': None},
-                 view_func=tags_handler, methods=['GET',])
-
-app.add_url_rule('/tags/', view_func=tags_handler, methods=['POST',])
-
-app.add_url_rule('/tags/<int:tag_id>', view_func=tags_handler,
-                 methods=['GET', 'PUT', 'DELETE'])
+register_handler(TagHandler, 'tags', '/tags/', pk='tag_id')

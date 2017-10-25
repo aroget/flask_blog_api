@@ -22,6 +22,9 @@ class Tag(Base):
     def __repr__(self):
         return '<Label %r>' % self.label
 
+    def is_from_author(self, author_id):
+        return self.author_id == author_id
+
     @property
     def serialize(self):
         return {

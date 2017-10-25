@@ -4,4 +4,5 @@ __all__ = [
     "session_handler",
     "author_handler",
     "media_handler",
+    "post_handler",
 ]

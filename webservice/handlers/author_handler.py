@@ -104,6 +104,9 @@ class AuthorHandler(MethodView):
 
         author.is_active = args.get('is_active')
 
+        if author.is_active is False:
+            print('Should disable all posts from author')
+
         db.session.add(author)
         db.session.commit()
 
